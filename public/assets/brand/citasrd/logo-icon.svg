@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 42" width="52" height="42" fill="none">
+  <!-- Lóbulo Cálido Amarillo / Oro (Izquierda) -->
+  <path
+    d="M26 39.5C26 39.5 4 27.5 4 14.5C4 7.5 10 2.5 18 2.5C22.2 2.5 24.8 4.6 26 7.2V39.5Z"
+    fill="#F59E0B"
+  />
+
+  <!-- Lóbulo Azul Cielo (Derecha) -->
+  <path
+    d="M26 39.5C26 39.5 48 27.5 48 14.5C48 7.5 42 2.5 34 2.5C29.8 2.5 27.2 4.6 26 7.2V39.5Z"
+    fill="#0284C7"
+  />
+
+  <!-- Cruz Blanca Médica Central -->
+  <rect x="21" y="9.5" width="10" height="20" rx="3" fill="#FFFFFF" />
+  <rect x="15" y="14.5" width="22" height="10" rx="3" fill="#FFFFFF" />
+
+  <!-- Cruz Interior Azul Acento -->
+  <rect x="23.5" y="12" width="5" height="15" rx="1.5" fill="#0284C7" />
+  <rect x="17.5" y="17" width="17" height="5" rx="1.5" fill="#0284C7" />
+</svg>
