@@ -967,6 +967,13 @@
         "description": "Mayfren is the CRM built by NEXATIXS that centralizes technical support (helpdesk with tickets, priorities and SLAs), technology inventory, real-time device monitoring (CPU, RAM, disk and installed software), staff performance evaluation, and business process automation — all in one place.",
         "tags": ["CRM", "Helpdesk", "SaaS"],
         "cta": "Discover Mayfren"
+      },
+      "citasrd": {
+        "title": "CitasRD",
+        "summary": "Platform to find medical specialists, check their availability, and book appointments online, hassle-free.",
+        "description": "CitasRD is the platform we built to connect patients with medical specialists in the Dominican Republic: search by specialty, location and insurance provider, real-time availability, and online appointment booking — for patients and for doctors themselves (Citas Pro).",
+        "tags": ["Healthcare", "Online Booking", "SaaS"],
+        "cta": "Discover CitasRD"
       }
     }
   },
