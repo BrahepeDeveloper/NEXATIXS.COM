@@ -14,7 +14,7 @@ export const getStaffContext = cache(async () => {
 
   const { data: staffUser } = await supabase
     .from("staff_users")
-    .select("full_name, role, must_change_password")
+    .select("full_name, role")
     .eq("id", user.id)
     .single();
 
