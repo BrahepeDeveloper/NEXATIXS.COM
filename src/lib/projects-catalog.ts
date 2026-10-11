@@ -11,4 +11,5 @@ export interface ProjectEntry {
 export const projects: ProjectEntry[] = [
   { slug: "kontao", logo: "/assets/brand/kontao/logo-icon.png", link: "https://www.kontao.lat/" },
   { slug: "mayfren", logo: "/assets/brand/mayfren/Logo-Mayfren.png", link: "https://mayfren.lat/" },
+  { slug: "citasrd", logo: "/assets/brand/citasrd/logo-icon.svg", link: "https://citasrd.do/" },
 ];
