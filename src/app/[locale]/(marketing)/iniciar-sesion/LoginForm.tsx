@@ -7,18 +7,19 @@ import { hardNavigateTo } from "@/lib/auth/resolve-home";
 import { supabase } from "@/lib/supabase/client";
 import { Field } from "@/components/ui/Field";
 import { Input } from "@/components/ui/Input";
-import { PasswordInput } from "@/components/ui/PasswordInput";
 import { Button } from "@/components/ui/Button";
 import { GoogleIcon } from "@/components/ui/GoogleIcon";
 
 type CallbackError = "oauth_error" | "no_account";
+type Step = "email" | "code";
 
 export function LoginForm({ initialError }: { initialError?: CallbackError }) {
   const t = useTranslations("Login");
   const locale = useLocale();
 
-  const [identifier, setIdentifier] = useState("");
-  const [password, setPassword] = useState("");
+  const [step, setStep] = useState<Step>("email");
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [googleSubmitting, setGoogleSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(
@@ -29,15 +30,37 @@ export function LoginForm({ initialError }: { initialError?: CallbackError }) {
         : null,
   );
 
-  async function handleSubmit(event: React.FormEvent) {
+  async function handleRequestCode(event: React.FormEvent) {
     event.preventDefault();
     setSubmitting(true);
     setError(null);
 
-    const response = await fetch("/api/auth/login", {
+    const response = await fetch("/api/auth/request-otp", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ identifier, password }),
+      body: JSON.stringify({ email }),
+    });
+    const result = (await response.json()) as { ok: boolean; error?: string };
+
+    setSubmitting(false);
+
+    if (!result.ok) {
+      setError(result.error === "rate_limited" ? t("rateLimited") : t("genericError"));
+      return;
+    }
+
+    setStep("code");
+  }
+
+  async function handleVerifyCode(event: React.FormEvent) {
+    event.preventDefault();
+    setSubmitting(true);
+    setError(null);
+
+    const response = await fetch("/api/auth/verify-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, code }),
     });
     const result = (await response.json()) as { ok: boolean; error?: string; destination?: string };
 
@@ -46,8 +69,8 @@ export function LoginForm({ initialError }: { initialError?: CallbackError }) {
       setError(
         result.error === "rate_limited"
           ? t("rateLimited")
-          : result.error === "invalid_credentials"
-            ? t("invalidCredentials")
+          : result.error === "invalid_code"
+            ? t("invalidCode")
             : t("genericError"),
       );
       return;
@@ -79,33 +102,64 @@ export function LoginForm({ initialError }: { initialError?: CallbackError }) {
     // further local state update is needed (or reachable) here.
   }
 
+  if (step === "code") {
+    return (
+      <>
+        <form onSubmit={handleVerifyCode} className="mt-8 space-y-5">
+          <p className="text-sm text-foreground/60">{t("codeSentTo", { email })}</p>
+          <Field label={t("code")} htmlFor="otp-code">
+            <Input
+              id="otp-code"
+              type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+              maxLength={6}
+              value={code}
+              onChange={(event) => setCode(event.target.value.replace(/\D/g, ""))}
+            />
+          </Field>
+
+          {error && <p className="text-sm text-red-500">{error}</p>}
+
+          <Button type="submit" size="lg" className="w-full" disabled={submitting || code.length !== 6}>
+            {submitting ? t("submitting") : t("verifyCode")}
+          </Button>
+
+          <button
+            type="button"
+            onClick={() => {
+              setStep("email");
+              setCode("");
+              setError(null);
+            }}
+            className="w-full text-center text-sm text-foreground/60 hover:text-brand-blue"
+          >
+            {t("changeEmail")}
+          </button>
+        </form>
+      </>
+    );
+  }
+
   return (
     <>
-      <form onSubmit={handleSubmit} className="mt-8 space-y-5">
+      <form onSubmit={handleRequestCode} className="mt-8 space-y-5">
         <Field label={t("email")} htmlFor="identifier">
           <Input
             id="identifier"
-            type="text"
+            type="email"
             required
             autoComplete="username"
-            value={identifier}
-            onChange={(event) => setIdentifier(event.target.value)}
-          />
-        </Field>
-        <Field label={t("password")} htmlFor="password">
-          <PasswordInput
-            id="password"
-            required
-            autoComplete="current-password"
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
           />
         </Field>
 
         {error && <p className="text-sm text-red-500">{error}</p>}
 
         <Button type="submit" size="lg" className="w-full" disabled={submitting || googleSubmitting}>
-          {submitting ? t("submitting") : t("submit")}
+          {submitting ? t("submitting") : t("sendCode")}
         </Button>
       </form>
 
@@ -129,7 +183,7 @@ export function LoginForm({ initialError }: { initialError?: CallbackError }) {
 
       <p className="mt-6 text-center text-sm text-foreground/60">
         {t("noAccount")}{" "}
-        <Link href="/agendar-cita" className="font-medium text-brand-blue hover:underline">
+        <Link href="/registro" className="font-medium text-brand-blue hover:underline">
           {t("requestAccess")}
         </Link>
       </p>

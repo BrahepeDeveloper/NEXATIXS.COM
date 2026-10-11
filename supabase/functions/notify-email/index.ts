@@ -150,6 +150,38 @@ async function handleContactMessage(id: string) {
   );
 }
 
+async function handleUpsellRequest(id: string) {
+  const { data: request, error } = await supabase
+    .from("upsell_requests")
+    .select("*, clients(company_name, nxt_id)")
+    .eq("id", id)
+    .single();
+
+  if (error || !request) {
+    console.error("[notify-email] No se pudo leer la solicitud de cotizacion", id, error);
+    return { sent: false, reason: "not_found" };
+  }
+
+  let requesterEmail = "No disponible";
+  if (request.requested_by) {
+    const { data: userData } = await supabase.auth.admin.getUserById(request.requested_by);
+    requesterEmail = userData.user?.email ?? "No disponible";
+  }
+
+  const companyName = request.clients?.company_name ?? "Cliente desconocido";
+  const nxtId = request.clients?.nxt_id ?? "N/A";
+
+  const html = `
+    <h2>Nueva solicitud desde el portal de clientes</h2>
+    <p><strong>Empresa:</strong> ${companyName} (${nxtId})</p>
+    <p><strong>Solicitado por:</strong> ${requesterEmail}</p>
+    <p><strong>Solicitud:</strong> ${request.item_name}</p>
+    ${request.description ? `<p><strong>Detalle:</strong> ${String(request.description).replace(/\n/g, "<br/>")}</p>` : ""}
+  `;
+
+  return sendEmail(SUPPORT_INBOX, `[Portal] Nueva solicitud — ${companyName}: ${request.item_name}`, html);
+}
+
 async function handleStatusOtp(payload: { to?: string; code?: string; displayId?: string }) {
   const { to, code, displayId } = payload;
 
@@ -190,20 +222,22 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    const validTypes = ["support_ticket", "appointment", "contact_message"];
-    if (!id || !validTypes.includes(type)) {
+    const handlers: Record<string, (id: string) => Promise<unknown>> = {
+      support_ticket: handleSupportTicket,
+      appointment: handleAppointment,
+      contact_message: handleContactMessage,
+      upsell_request: handleUpsellRequest,
+    };
+
+    const handler = id ? handlers[type] : undefined;
+    if (!handler) {
       return new Response(JSON.stringify({ error: "invalid_payload" }), {
         status: 400,
         headers: { "Content-Type": "application/json" },
       });
     }
 
-    const result =
-      type === "support_ticket"
-        ? await handleSupportTicket(id)
-        : type === "appointment"
-          ? await handleAppointment(id)
-          : await handleContactMessage(id);
+    const result = await handler(id);
 
     return new Response(JSON.stringify(result), {
       status: 200,
